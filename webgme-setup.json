@@ -1,0 +1,39 @@
+{
+  "components": {
+    "addons": {},
+    "decorators": {
+      "SystemNetArcDecorator": {
+        "src": "src/decorators/SystemNetArcDecorator"
+      },
+      "SystemNetPlaceDecorator": {
+        "src": "src/decorators/SystemNetPlaceDecorator"
+      },
+      "SystemNetTransitionDecorator": {
+        "src": "src/decorators/SystemNetTransitionDecorator"
+      }
+    },
+    "layouts": {},
+    "plugins": {
+      "SystemNetVerifier": {
+        "src": "src/plugins/SystemNetVerifier",
+        "test": "test/plugins/SystemNetVerifier"
+      }
+    },
+    "routers": {},
+    "seeds": {
+      "SystemNet": {
+        "src": "src/seeds/SystemNet"
+      }
+    },
+    "visualizers": {}
+  },
+  "dependencies": {
+    "addons": {},
+    "decorators": {},
+    "layouts": {},
+    "plugins": {},
+    "routers": {},
+    "seeds": {},
+    "visualizers": {}
+  }
+}
