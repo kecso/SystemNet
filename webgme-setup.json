@@ -7,9 +7,6 @@
       },
       "SystemNetPlaceDecorator": {
         "src": "src/decorators/SystemNetPlaceDecorator"
-      },
-      "SystemNetTransitionDecorator": {
-        "src": "src/decorators/SystemNetTransitionDecorator"
       }
     },
     "layouts": {},

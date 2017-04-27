@@ -1,0 +1,5 @@
+<svg width="5" height="40" xmlns="http://www.w3.org/2000/svg">
+    <rect id="svg_1" height="40" width="5" y="0" x="0" stroke-width="1.5" stroke="#000" fill="#000000"/>
+    <line id='ca_1' data-angle1="180" data-angle2="180" class='connection-area' x1="0" y1="0" x2="0" y2="40"/>
+    <line id='ca_2' data-angle1="0" data-angle2="0" class='connection-area' x1="5" y1="0" x2="5" y2="40"/>
+</svg>

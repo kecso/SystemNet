@@ -69,6 +69,8 @@ define([
             .then(function (model) {
                 var nuxmv = ejs.render(NuXmv, model);
 
+                console.log(model.places);
+                console.log(model.transitions);
                 console.log(nuxmv);
                 self.result.setSuccess(true);
                 callback(null, self.result);
