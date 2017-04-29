@@ -49,7 +49,7 @@ for (i = 0; i < places.length; i += 1) {
 <%
 }
 for (i = 0; i < transitionDefs.length; i += 1) {
-    %>FAIRNESS fire = <%= i %> -> fireable<%= i %>;
+    %>FAIRNESS fireable<%= i %> -> fire = <%= i %>;
 <%
 }
 %>
@@ -68,7 +68,7 @@ for(i = 0; i < transitions.length; i += 1){
 LTLSPEC G infinite;
 <%
 for(i = 0; i < transitions.length; i += 1){
-    %>LTLSPEC F (fire = <%= i %> & fireable<%= i %>);
+    %>LTLSPEC G (F (fire = <%= i %> & fireable<%= i %>));
 <%
 }
 %>

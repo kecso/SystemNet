@@ -13,13 +13,15 @@ define([
     'plugin/PluginBase',
     'q',
     'common/util/ejs',
-    'text!./nuxmv.ejs'
+    'text!./nuxmv.ejs',
+    'common/util/guid'
 ], function (PluginConfig,
              pluginMetadata,
              PluginBase,
              Q,
              ejs,
-             NuXmv) {
+             NuXmv,
+             GUID) {
     'use strict';
 
     pluginMetadata = JSON.parse(pluginMetadata);
@@ -64,15 +66,21 @@ define([
     SystemNetVerifier.prototype.main = function (callback) {
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
-        var self = this;
+        var self = this,
+        nuxmvInput,
+        nuxmvResult;
         self.getDataModel(self.activeNode)
             .then(function (model) {
-                var nuxmv = ejs.render(NuXmv, model);
+                nuxmvInput = ejs.render(NuXmv, model);
 
-                console.log(model.places);
-                console.log(model.transitions);
-                console.log(nuxmv);
+                // console.log(model.places);
+                // console.log(model.transitions);
+                // console.log(nuxmvInput);
                 self.result.setSuccess(true);
+                nuxmvResult = self.checkNuxmv(nuxmvInput);
+                if(nuxmvResult !== null){
+                    self.createMessage(self.activeNode,'The raw output of the model-checking:'+nuxmvResult);
+                }
                 callback(null, self.result);
             })
             .catch(function (err) {
@@ -148,6 +156,27 @@ define([
             });
 
         return deferred.promise;
+    };
+
+    SystemNetVerifier.prototype.checkNuxmv = function (nuxmv) {
+        var self = this,
+            fs = require('fs'),
+            exec = require('child_process').execSync,
+            response = null,
+            fileName = GUID() + '.smv';
+
+        fs.writeFileSync(fileName, nuxmv, 'utf8');
+
+        try {
+            response = exec('nuxmv ' + fileName, {encoding: 'utf8'});
+        } catch (e) {
+            console.log(e);
+            self.result.setSucess(false);
+            self.createMessage(null, e);
+        }
+
+        fs.unlinkSync(fileName);
+        return response;
     };
 
     return SystemNetVerifier;

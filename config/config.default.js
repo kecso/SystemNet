@@ -8,5 +8,6 @@ var config = require('./config.webgme'),
 // config.mongo.uri = 'mongodb://127.0.0.1:27017/webgme_my_app';
 
 config.visualization.svgDirs.push('src/svgs');
+config.plugin.allowServerExecution = true;
 validateConfig(config);
 module.exports = config;
