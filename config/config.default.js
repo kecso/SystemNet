@@ -9,5 +9,6 @@ var config = require('./config.webgme'),
 
 config.visualization.svgDirs.push('src/svgs');
 config.plugin.allowServerExecution = true;
+config.requirejsPaths['systemnetBase'] = '/../src';
 validateConfig(config);
 module.exports = config;

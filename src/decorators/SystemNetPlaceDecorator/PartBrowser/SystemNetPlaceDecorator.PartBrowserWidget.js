@@ -12,13 +12,15 @@ define([
     'js/Widgets/PartBrowser/PartBrowserWidget.DecoratorBase',
     'js/Widgets/DiagramDesigner/DiagramDesignerWidget.Constants',
     'text!../DiagramDesigner/SystemNetPlaceDecorator.DiagramDesignerWidget.html',
+    'text!systemnetBase/svgs/place.svg',
     'css!../DiagramDesigner/SystemNetPlaceDecorator.DiagramDesignerWidget.css',
     'css!./SystemNetPlaceDecorator.PartBrowserWidget.css'
 ], function (CONSTANTS,
              nodePropertyNames,
              PartBrowserWidgetDecoratorBase,
              DiagramDesignerWidgetConstants,
-             SystemNetPlaceDecoratorDiagramDesignerWidgetTemplate) {
+             SystemNetPlaceDecoratorDiagramDesignerWidgetTemplate,
+             PlaceSvgTemplate) {
 
     'use strict';
 
@@ -41,6 +43,7 @@ define([
 
     SystemNetPlaceDecoratorPartBrowserWidget.prototype.$DOMBase = (function () {
         var el = $(SystemNetPlaceDecoratorDiagramDesignerWidgetTemplate);
+        el.append(PlaceSvgTemplate);
         //use the same HTML template as the SystemNetPlaceDecorator.DiagramDesignerWidget
         //but remove the connector DOM elements since they are not needed in the PartBrowser
         el.find('.' + DiagramDesignerWidgetConstants.CONNECTOR_CLASS).remove();
@@ -51,7 +54,9 @@ define([
         this.$el = this.$DOMBase.clone();
 
         //find name placeholder
-        this.skinParts.$name = this.$el.find('.name');
+        this.skinParts.$name = this.$el.find('#name')[0];
+        this.skinParts.$token = this.$el.find('#token')[0];
+        this.skinParts.$capacity = this.$el.find('#capacity')[0];
 
         this._renderContent();
     };
@@ -69,7 +74,9 @@ define([
         }
 
         if (nodeObj) {
-            this.skinParts.$name.text(nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '');
+            this.skinParts.$name.innerHTML = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
+            this.skinParts.$token.innerHTML = nodeObj.getAttribute('initialMarking') || '0';
+            this.skinParts.$capacity.innerHTML = nodeObj.getAttribute('capacity') || '0';
         }
     };
 

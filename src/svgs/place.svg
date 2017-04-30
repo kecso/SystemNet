@@ -1,3 +1,14 @@
-<svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="25" cy="25" r="24" stroke-width="1.5" stroke="#000" fill="#ffffff" />
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="50" height="50" viewBox="74 99 202 202" version="1.1">
+    <defs>
+        <path id="MyPath" d="M100,200 C100,100 250,100 250,200"/>
+    </defs>
+    <use xlink:href="#MyPath" fill="none" stroke="none"/>
+    <text font-family="monospace" font-size="28" font-weight="bold" fill="black">
+        <textPath id="name" xlink:href="#MyPath">
+            12345678901234567890
+        </textPath>
+    </text>
+    <circle cx="175" cy="200" r="100" stroke-width="1.5" stroke="#000" fill="none"/>
+    <text id="token" font-family="monospace" font-size="80" font-weight="bold" fill="black" x="175" y="230" text-anchor="middle">999</text>
+    <text id="capacity" font-family="monospace" font-size="40" font-weight="bold" fill="black" x="175" y="280" text-anchor="middle">99</text>
 </svg>

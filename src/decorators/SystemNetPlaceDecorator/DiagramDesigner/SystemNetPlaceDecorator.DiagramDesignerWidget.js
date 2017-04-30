@@ -10,8 +10,13 @@ define([
     'js/NodePropertyNames',
     'js/Widgets/DiagramDesigner/DiagramDesignerWidget.DecoratorBase',
     'text!./SystemNetPlaceDecorator.DiagramDesignerWidget.html',
+    'text!systemnetBase/svgs/place.svg',
     'css!./SystemNetPlaceDecorator.DiagramDesignerWidget.css'
-], function (CONSTANTS, nodePropertyNames, DiagramDesignerWidgetDecoratorBase, SystemNetPlaceDecoratorTemplate) {
+], function (CONSTANTS,
+             nodePropertyNames,
+             DiagramDesignerWidgetDecoratorBase,
+             SystemNetPlaceDecoratorTemplate,
+             PlaceSvgTemplate) {
 
     'use strict';
 
@@ -35,32 +40,33 @@ define([
 
     /*********************** OVERRIDE DiagramDesignerWidgetDecoratorBase MEMBERS **************************/
 
-    SystemNetPlaceDecorator.prototype.$DOMBase = $(SystemNetPlaceDecoratorTemplate);
+    SystemNetPlaceDecorator.prototype.$DOMBase = $(SystemNetPlaceDecoratorTemplate).append(PlaceSvgTemplate);
+    // SystemNetPlaceDecorator.prototype.$DOMBase.find("svg")[0].addClass("connector bottom top");
 
     SystemNetPlaceDecorator.prototype.on_addTo = function () {
         var self = this;
 
-        this._renderName();
+        this._renderContent();
 
         // set title editable on double-click
-        this.skinParts.$name.on('dblclick.editOnDblClick', null, function (event) {
-            if (self.hostDesignerItem.canvas.getIsReadOnlyMode() !== true) {
-                $(this).editInPlace({
-                    class: '',
-                    onChange: function (oldValue, newValue) {
-                        self._onNodeTitleChanged(oldValue, newValue);
-                    }
-                });
-            }
-            event.stopPropagation();
-            event.preventDefault();
-        });
+        // this.skinParts.$name.on('dblclick.editOnDblClick', null, function (event) {
+        //     if (self.hostDesignerItem.canvas.getIsReadOnlyMode() !== true) {
+        //         $(this).editInPlace({
+        //             class: '',
+        //             onChange: function (oldValue, newValue) {
+        //                 self._onNodeTitleChanged(oldValue, newValue);
+        //             }
+        //         });
+        //     }
+        //     event.stopPropagation();
+        //     event.preventDefault();
+        // });
 
         //let the parent decorator class do its job first
         __parent_proto__.on_addTo.apply(this, arguments);
     };
 
-    SystemNetPlaceDecorator.prototype._renderName = function () {
+    SystemNetPlaceDecorator.prototype._renderContent = function () {
         var client = this._control._client,
             nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
 
@@ -69,26 +75,22 @@ define([
 
         if (nodeObj) {
             this.name = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
+            this.token = nodeObj.getAttribute('initialMarking') || 0;
+            this.capacity = nodeObj.getAttribute('capacity') || 1;
         }
 
-        //find name placeholder
-        this.skinParts.$name = this.$el.find('.name');
-        this.skinParts.$name.text(this.name);
+        this.skinParts.$name = this.$el.find('#name')[0];
+        this.skinParts.$name.innerHTML = this.name;
+
+        this.skinParts.$token = this.$el.find('#token')[0];
+        this.skinParts.$token.innerHTML = this.token;
+
+        this.skinParts.$capacity = this.$el.find('#capacity')[0];
+        this.skinParts.$capacity.innerHTML = this.capacity;
     };
 
     SystemNetPlaceDecorator.prototype.update = function () {
-        var client = this._control._client,
-            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]),
-            newName = '';
-
-        if (nodeObj) {
-            newName = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
-
-            if (this.name !== newName) {
-                this.name = newName;
-                this.skinParts.$name.text(this.name);
-            }
-        }
+        this._renderContent();
     };
 
     SystemNetPlaceDecorator.prototype.getConnectionAreas = function (id /*, isEnd, connectionMetaInfo*/) {
@@ -153,11 +155,11 @@ define([
 
     /**************** EDIT NODE TITLE ************************/
 
-    SystemNetPlaceDecorator.prototype._onNodeTitleChanged = function (oldValue, newValue) {
-        var client = this._control._client;
-
-        client.setAttribute(this._metaInfo[CONSTANTS.GME_ID], nodePropertyNames.Attributes.name, newValue);
-    };
+    // SystemNetPlaceDecorator.prototype._onNodeTitleChanged = function (oldValue, newValue) {
+    //     var client = this._control._client;
+    //
+    //     client.setAttribute(this._metaInfo[CONSTANTS.GME_ID], nodePropertyNames.Attributes.name, newValue);
+    // };
 
     /**************** END OF - EDIT NODE TITLE ************************/
 
