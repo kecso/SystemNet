@@ -10,5 +10,30 @@
   "disableServerSideExecution": false,
   "disableBrowserSideExecution": true,
   "writeAccessRequired": false,
-  "configStructure": []
+  "configStructure": [
+    {
+      "name": "safety",
+      "displayName": "Safety check",
+      "description": "Is all reachable marking safe or is there some that violates the capacity rules?",
+      "value": true,
+      "valueType": "boolean",
+      "readOnly": false
+    },
+    {
+      "name": "infinite",
+      "displayName": "Infinite check",
+      "description": "Can the model execute infinitely long or does it have a terminating state?",
+      "value": true,
+      "valueType": "boolean",
+      "readOnly": false
+    },
+    {
+      "name": "balanced",
+      "displayName": "Balanced check",
+      "description": "Can all transaction be fired infinitely many times?",
+      "value": true,
+      "valueType": "boolean",
+      "readOnly": false
+    }
+  ]
 }

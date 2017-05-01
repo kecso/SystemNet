@@ -67,20 +67,45 @@ define([
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
         var self = this,
-        nuxmvInput,
-        nuxmvResult;
+            currentConfig = self.getCurrentConfig(),
+            nuxmvInput,
+            nuxmvResult,
+            parsedResult,
+            artifact,
+            filesToAdd = {};
+
         self.getDataModel(self.activeNode)
             .then(function (model) {
+                var modelName = self.core.getAttribute(self.activeNode, 'name');
+
+                model.safety = currentConfig.safety;
+                model.infinite = currentConfig.infinite;
+                model.balanced = currentConfig.balanced;
+
                 nuxmvInput = ejs.render(NuXmv, model);
 
-                // console.log(model.places);
-                // console.log(model.transitions);
-                // console.log(nuxmvInput);
                 self.result.setSuccess(true);
                 nuxmvResult = self.checkNuxmv(nuxmvInput);
-                if(nuxmvResult !== null){
-                    self.createMessage(self.activeNode,'The raw output of the model-checking:'+nuxmvResult);
+                parsedResult = self.parseResult(nuxmvResult, model);
+
+                artifact = self.blobClient.createArtifact(modelName + '_check');
+                filesToAdd[modelName + '.smv'] = nuxmvInput;
+                filesToAdd[modelName + '.res'] = nuxmvResult;
+                filesToAdd[modelName + '_parsed.res'] = JSON.stringify(parsedResult, null, 2);
+
+                if (nuxmvResult !== null) {
+                    self.createMessage(self.activeNode, 'The parsed output:' + JSON.stringify(parsedResult, null, 2));
                 }
+                return artifact.addFiles(filesToAdd);
+            })
+            .then(function (hashes) {
+                self.logger.info('Files (metadata) have hashes: ' + hashes.toString());
+                return artifact.save();
+            })
+            .then(function (artifactHash) {
+                self.logger.info('Artifact (metadata) has hash: ' + artifactHash);
+                self.result.setSuccess(true);
+                self.result.addArtifact(artifactHash);
                 callback(null, self.result);
             })
             .catch(function (err) {
@@ -179,5 +204,90 @@ define([
         return response;
     };
 
+    SystemNetVerifier.prototype.parseResult = function (result, dataModel) {
+        var parsedResult = {
+                safety: true,
+                infinite: true,
+                balanced: true,
+                counterTraces: {
+                    safety: {
+                        has: false,
+                        fireSequence: [],
+                        loopStart: null
+                    },
+                    infinite: {
+                        has: false,
+                        fireSequence: [],
+                        loopStart: null
+                    },
+                    balanced: {
+                        has: false,
+                        fireSequence: [],
+                        loopStart: null
+                    }
+                }
+            },
+            lines = result.split('\n'),
+            i, j,
+            key,
+            trace = {},
+            fireables = [],
+            fire = null,
+            state = 'base';
+
+        for (i = 0; i < lines.length; i += 1) {
+            if (lines[i].indexOf('***') === 0) {
+                continue;
+            }
+
+            if (lines[i].indexOf('-- specification') === 0) {
+                state = 'base';
+                if (lines[i].indexOf('safety') > 0) {
+                    key = 'safety';
+                } else if (lines[i].indexOf('infinite') > 0) {
+                    key = 'infinite';
+                } else {
+                    key = 'balanced'
+                }
+
+                if (lines[i].indexOf('is true') > 0) {
+                    parsedResult[key] = parsedResult[key] && true;
+                } else {
+                    parsedResult[key] = false;
+                    if (parsedResult.counterTraces[key].has === false) {
+                        trace = parsedResult.counterTraces[key];
+                        trace.has = true;
+                        state = 'trace';
+                        fireables = [];
+                        for (j = 0; j < dataModel.transitions.length; j += 1) {
+                            fireables.push = false;
+                        }
+                    }
+                }
+            } else if (state === 'trace') {
+                if (lines[i].indexOf('->') > 0 && lines[i].indexOf('<-') > 0) {
+                    //new state le us check if we fired something
+                    if (fire !== null && fireables[fire]) {
+                        trace.fireSequence.push(dataModel.transitions[fire]);
+                    }
+                } else if (lines[i].indexOf('-- Loop starts here') > 0) {
+                    trace.loopStart = trace.fireSequence.length;
+                } else if (lines[i].indexOf('fire = ') > 0) {
+                    // console.log('fire: ',(/fire = ([0-9]+)/g).exec(lines[i])[1]);
+                    fire = Number((/fire = ([0-9]+)/g).exec(lines[i])[1]);
+                } else if (lines[i].indexOf('fireable') > 0) {
+                    // console.log('fireable: ',(/fireable([0-9]+)/g).exec(lines[i])[1]);
+                    key = Number((/fireable([0-9]+)/g).exec(lines[i])[1]);
+                    if (lines[i].indexOf('TRUE') > 0) {
+                        fireables[key] = true;
+                    } else {
+                        fireables[key] = false;
+                    }
+                }
+            }
+        }
+
+        return parsedResult;
+    };
     return SystemNetVerifier;
 });

@@ -53,22 +53,24 @@ for (i = 0; i < transitionDefs.length; i += 1) {
 <%
 }
 %>
-
+<% if (safety === true) { %>
 DEFINE safety := <%
 for(i = 0; i < places.length; i += 1){
     %> pl<%= i %> > -1 &<%
 }
 %> TRUE;
-LTLSPEC G safety;
+LTLSPEC G safety; <% }
+if (infinite === true) { %>
 DEFINE infinite := <%
 for(i = 0; i < transitions.length; i += 1){
     %> fireable<%= i %> |<%
 }
 %> FALSE;
 LTLSPEC G infinite;
-<%
+<% }
+if( balanced === true ){
 for(i = 0; i < transitions.length; i += 1){
     %>LTLSPEC G (F (fire = <%= i %> & fireable<%= i %>));
 <%
-}
+}}
 %>
