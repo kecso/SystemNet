@@ -74,9 +74,11 @@ define([
             artifact,
             filesToAdd = {};
 
+        self._nodes = {};
         self.getDataModel(self.activeNode)
             .then(function (model) {
-                var modelName = self.core.getAttribute(self.activeNode, 'name');
+                var modelName = self.core.getAttribute(self.activeNode, 'name'),
+                    htmlResult;
 
                 model.safety = currentConfig.safety;
                 model.infinite = currentConfig.infinite;
@@ -87,6 +89,7 @@ define([
                 self.result.setSuccess(true);
                 nuxmvResult = self.checkNuxmv(nuxmvInput);
                 parsedResult = self.parseResult(nuxmvResult, model);
+                htmlResult = self.getHtmlResult(parsedResult);
 
                 artifact = self.blobClient.createArtifact(modelName + '_check');
                 filesToAdd[modelName + '.smv'] = nuxmvInput;
@@ -94,7 +97,8 @@ define([
                 filesToAdd[modelName + '_parsed.res'] = JSON.stringify(parsedResult, null, 2);
 
                 if (nuxmvResult !== null) {
-                    self.createMessage(self.activeNode, 'The parsed output:' + JSON.stringify(parsedResult, null, 2));
+                    // self.createMessage(self.activeNode, 'The parsed output:' + JSON.stringify(parsedResult, null, 2));
+                    self.createMessage(self.activeNode, htmlResult);
                 }
                 return artifact.addFiles(filesToAdd);
             })
@@ -115,7 +119,8 @@ define([
     };
 
     SystemNetVerifier.prototype.getDataModel = function (systemNetNode) {
-        var core = this.core,
+        var nodes = this._nodes,
+            core = this.core,
             model = {
                 places: [],
                 transitions: [],
@@ -130,6 +135,7 @@ define([
             return;
         }
 
+        nodes[core.getPath(systemNetNode)] = systemNetNode;
         core.loadChildren(systemNetNode)
             .then(function (children) {
                 var i, j,
@@ -137,6 +143,7 @@ define([
                     type;
 
                 for (i = 0; i < children.length; i += 1) {
+                    nodes[core.getPath(children[i])] = children[i];
                     type = getTypeName(core, children[i]);
                     switch (type) {
                         case 'Place':
@@ -233,7 +240,9 @@ define([
             trace = {},
             fireables = [],
             fire = null,
-            state = 'base';
+            state = 'base',
+            core = this.core,
+            nodes = this._nodes;
 
         for (i = 0; i < lines.length; i += 1) {
             if (lines[i].indexOf('***') === 0) {
@@ -268,7 +277,8 @@ define([
                 if (lines[i].indexOf('->') > 0 && lines[i].indexOf('<-') > 0) {
                     //new state le us check if we fired something
                     if (fire !== null && fireables[fire]) {
-                        trace.fireSequence.push(dataModel.transitions[fire]);
+                        key = dataModel.transitions[fire];
+                        trace.fireSequence.push(core.getAttribute(nodes[key], 'name') + '(' + key + ')');
                     }
                 } else if (lines[i].indexOf('-- Loop starts here') > 0) {
                     trace.loopStart = trace.fireSequence.length;
@@ -288,6 +298,78 @@ define([
         }
 
         return parsedResult;
+    };
+
+    SystemNetVerifier.prototype.getHtmlResult = function (parsedResult) {
+        var htmlResult = '',
+            config = this.getCurrentConfig(),
+            redBold = '<span style="color:red; font-weight:bold">',
+            greenBold = '<span style="color:red; font-weight:bold">',
+            printTrace = function (trace) {
+                var i;
+
+                if (trace.has !== true) {
+                    return;
+                }
+
+                htmlResult += '<h5>';
+                if (trace.loopStart === 0) {
+                    htmlResult += '<b>[</b> ';
+                }else {
+                    htmlResult += '  ';
+                }
+                htmlResult += trace.fireSequence[0];
+                for (i = 0; i < trace.fireSequence.length; i += 1) {
+                    htmlResult += ',<br/>';
+                    if (trace.loopStart === i) {
+                        htmlResult += '<b>[</b> ';
+                    } else {
+                        htmlResult += '  ';
+                    }
+                    htmlResult += trace.fireSequence[i];
+                }
+
+                if (typeof trace.loopStart === 'number') {
+                    if(trace.loopStart < trace.fireSequence.length){
+                        htmlResult += '<b>]+</b>';
+                    } else {
+                        htmlResult += '<b>+</b>';
+                    }
+                }
+                htmlResult += '</h5>';
+            };
+
+        if (config.safety === true) {
+            htmlResult += '<h4>Safety check: ';
+            if (parsedResult.safety === true) {
+                htmlResult += greenBold + 'success</span></h4>';
+            } else {
+                htmlResult += redBold + 'fail</span></h4>';
+                printTrace(parsedResult.counterTraces.safety);
+            }
+        }
+
+        if (config.infinite === true) {
+            htmlResult += '<h4>Infinite execution check: ';
+            if (parsedResult.infinite === true) {
+                htmlResult += greenBold + 'success</span></h4>';
+            } else {
+                htmlResult += greenBold + 'fail</span></h4>';
+                printTrace(parsedResult.counterTraces.infinite);
+            }
+        }
+
+        if (config.balanced === true) {
+            htmlResult += '<h4>Balance check: ';
+            if (parsedResult.balanced === true) {
+                htmlResult += greenBold + 'success</span></h4>';
+            } else {
+                htmlResult += greenBold + 'fail</span></h4>';
+                printTrace(parsedResult.counterTraces.balanced);
+            }
+        }
+
+        return htmlResult;
     };
     return SystemNetVerifier;
 });
